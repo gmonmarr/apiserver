@@ -13,3 +13,6 @@ Icon?
 ._*
 .Spotlight-V100
 .Trashes
+
+# Otros a ignorar
+.env
