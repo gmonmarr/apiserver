@@ -65,7 +65,7 @@ curl -X GET http://localhost:3000/login/last/1
 ```bash
 curl -X POST http://localhost:3000/login \
      -H "Content-Type: application/json" \
-     -d '{"email": "memo.montemayor@example.com", "password": "memoPASS"}'
+     -d '{"email": "guille@example.com", "password": "memo123"}'
 ```
 ```bash
 curl -X GET http://localhost:3000/login/last/1
