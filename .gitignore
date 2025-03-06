@@ -1,0 +1,15 @@
+# Ignore node_modules
+node_modules/
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Folder attributes
+Icon?
+
+# macOS-specific files
+._*
+.Spotlight-V100
+.Trashes
