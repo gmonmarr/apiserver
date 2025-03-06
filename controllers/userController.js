@@ -33,7 +33,7 @@ async function createUser(req, res) {
 // Get all users [READ]
 async function getUsers(req, res) {
     try {
-        const result = await connection.exec(`SELECT USERID, NAME, EMAIL, LASTLOGIN, CREATEDAT FROM USERS`);
+        const result = await connection.exec(`SELECT * FROM USERS`);
         res.json(result);
     } catch (error) {
         res.status(500).json({ error: error.message });

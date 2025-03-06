@@ -83,13 +83,13 @@ async function lastLogin(req, res) {
     }
 }
 
-// Delete a user
+// Set a user's password to 0 (block's login)
 async function deletePassword(req, res) {
     const { id } = req.params;
 
     try {
-        await connection.exec(`DELETE FROM USERS WHERE USERID = ?`, [id]);
-        res.json({ message: 'User deleted successfully!' });
+        await connection.exec(`UPDATE USERS SET PASSWORDHASH = 0 WHERE USERID = ?`, [id]);
+        res.json({ message: 'Password removed successfully!' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
