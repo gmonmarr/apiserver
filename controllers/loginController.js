@@ -8,7 +8,7 @@ async function login(req, res) {
     const { email, password } = req.body;
     try {
         const result = await connection.exec(
-            `SELECT * FROM USERS WHERE Email = ? AND PasswordHash = ?`,
+            `SELECT USERID, NAME, EMAIL, PASSWORDHASH FROM USERS WHERE EMAIL = ? AND PASSWORDHASH = ?`,
             [email, password]
         );
 
@@ -20,13 +20,15 @@ async function login(req, res) {
 
         // Generate JWT token
         const token = jwt.sign(
-            { id: user.UserID, email: user.Email },
+            { id: user.USERID, email: user.EMAIL },
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
 
         // Update last login timestamp
-        await connection.exec(`UPDATE USERS SET LastLogin = CURRENT_TIMESTAMP WHERE UserID = ?`, [user.UserID]);
+        await connection.exec(`UPDATE USERS SET LASTLOGIN = CURRENT_TIMESTAMP WHERE USERID = ?`, [user.USERID]);
+
+        console.log(`User ${user.USERID} logged in at ${new Date().toISOString()}`);
 
         res.json({ message: 'Login successful', token });
     } catch (error) {
@@ -34,13 +36,13 @@ async function login(req, res) {
     }
 }
 
-// Read last login
+// Read last login for a specific user
 async function lastLogin(req, res) {
     const { id } = req.params;
 
     try {
         const result = await connection.exec(
-            `SELECT UserID, Name, Email, LastLogin FROM USERS WHERE UserID = ? AND LastLogin IS NOT NULL ORDER BY LastLogin DESC LIMIT 1`,
+            `SELECT USERID, NAME, EMAIL, LASTLOGIN FROM USERS WHERE USERID = ? AND LASTLOGIN IS NOT NULL ORDER BY LASTLOGIN DESC LIMIT 1`,
             [id]
         );
 
@@ -48,19 +50,19 @@ async function lastLogin(req, res) {
             return res.status(404).json({ message: 'No recent login found for this user' });
         }
 
-        res.json(result[0]);
+        res.json(result[0].LASTLOGIN);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 }
 
-// Update a password
+// Update a user's password
 async function updatePassword(req, res) {
     const { id } = req.params;
     const { password } = req.body;
 
     try {
-        const sql = `UPDATE USERS SET PasswordHash = ? WHERE UserID = ?`;
+        const sql = `UPDATE USERS SET PASSWORDHASH = ? WHERE USERID = ?`;
         await connection.exec(sql, [password, id]);
         res.json({ message: 'Password updated successfully!' });
     } catch (error) {
@@ -68,12 +70,12 @@ async function updatePassword(req, res) {
     }
 }
 
-// Delete a user (remove password)
+// Delete a user
 async function deletePassword(req, res) {
     const { id } = req.params;
 
     try {
-        await connection.exec(`DELETE FROM USERS WHERE UserID = ?`, [id]);
+        await connection.exec(`DELETE FROM USERS WHERE USERID = ?`, [id]);
         res.json({ message: 'User deleted successfully!' });
     } catch (error) {
         res.status(500).json({ error: error.message });
