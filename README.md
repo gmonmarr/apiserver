@@ -82,7 +82,7 @@ curl -X GET http://localhost:3000/users
 ```
 
 
-- DELETE de login (eliminará el HashPassword de un usuario) (DELETE localhost:3000/login/:id)
+- DELETE de login (hace el hashpassword = 0, haciendo imposible el login) (DELETE localhost:3000/login/:id)
 ```bash
 curl -X DELETE http://localhost:3000/login/1
 ```
