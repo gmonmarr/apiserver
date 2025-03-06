@@ -89,3 +89,8 @@ curl -X DELETE http://localhost:3000/login/1
 ```bash
 curl -X GET http://localhost:3000/users
 ```
+```bash
+curl -X POST http://localhost:3000/login \
+     -H "Content-Type: application/json" \
+     -d '{"email": "guille@example.com", "password": "memo123"}'
+```
