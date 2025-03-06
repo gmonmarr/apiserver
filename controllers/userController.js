@@ -1,12 +1,15 @@
 // controllers/userController.js
 
 const { connection } = require('../dbHana');
+const bcrypt = require('bcryptjs');
+require('dotenv').config();
+
+const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS) || 10;
+const BCRYPT_SALT = process.env.BCRYPT_SALT || bcrypt.genSaltSync(BCRYPT_ROUNDS);
 
 // Create a user [CREATE]
 async function createUser(req, res) {
     const { name, email, password } = req.body;
-    console.log('Creating user:', name, email, password);
-    console.log('Creating user:', req.body);
     try {
         const checkSql = `SELECT COUNT(*) AS COUNT FROM USERS WHERE EMAIL = ?`;
         const checkResult = await connection.exec(checkSql, [email]);
@@ -15,8 +18,11 @@ async function createUser(req, res) {
             return res.status(400).json({ message: `User with email ${email} already exists.` });
         }
 
+        // Hash the password using provided salt
+        const hashedPassword = await bcrypt.hash(password, BCRYPT_SALT);
+
         const sql = `INSERT INTO USERS (NAME, EMAIL, PASSWORDHASH, CREATEDAT) VALUES (?, ?, ?, CURRENT_TIMESTAMP)`;
-        await connection.exec(sql, [name, email, password]);
+        await connection.exec(sql, [name, email, hashedPassword]);
 
         res.status(201).json({ message: 'User created successfully!' });
     } catch (error) {

@@ -2,14 +2,19 @@
 
 const { connection } = require('../dbHana');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+require('dotenv').config();
+
+const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS) || 10;
+const BCRYPT_SALT = process.env.BCRYPT_SALT || bcrypt.genSaltSync(BCRYPT_ROUNDS);
 
 // Login a user [READ]
 async function login(req, res) {
     const { email, password } = req.body;
     try {
         const result = await connection.exec(
-            `SELECT USERID, NAME, EMAIL, PASSWORDHASH FROM USERS WHERE EMAIL = ? AND PASSWORDHASH = ?`,
-            [email, password]
+            `SELECT USERID, NAME, EMAIL, PASSWORDHASH FROM USERS WHERE EMAIL = ?`,
+            [email]
         );
 
         if (result.length === 0) {
@@ -17,6 +22,12 @@ async function login(req, res) {
         }
 
         const user = result[0];
+
+        // Compare the hashed password
+        const isMatch = await bcrypt.compare(password, user.PASSWORDHASH);
+        if (!isMatch) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
 
         // Generate JWT token
         const token = jwt.sign(
@@ -28,9 +39,25 @@ async function login(req, res) {
         // Update last login timestamp
         await connection.exec(`UPDATE USERS SET LASTLOGIN = CURRENT_TIMESTAMP WHERE USERID = ?`, [user.USERID]);
 
-        console.log(`User ${user.USERID} logged in at ${new Date().toISOString()}`);
-
         res.json({ message: 'Login successful', token });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
+// Update a user's password [UPDATE]
+async function updatePassword(req, res) {
+    const { id } = req.params;
+    const { password } = req.body;
+
+    try {
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(password, BCRYPT_SALT);
+
+        const sql = `UPDATE USERS SET PASSWORDHASH = ? WHERE USERID = ?`;
+        await connection.exec(sql, [hashedPassword, id]);
+
+        res.json({ message: 'Password updated successfully!' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -51,20 +78,6 @@ async function lastLogin(req, res) {
         }
 
         res.json(result[0].LASTLOGIN);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-}
-
-// Update a user's password
-async function updatePassword(req, res) {
-    const { id } = req.params;
-    const { password } = req.body;
-
-    try {
-        const sql = `UPDATE USERS SET PASSWORDHASH = ? WHERE USERID = ?`;
-        await connection.exec(sql, [password, id]);
-        res.json({ message: 'Password updated successfully!' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
