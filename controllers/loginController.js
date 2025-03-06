@@ -8,7 +8,7 @@ async function login(req, res) {
     const { email, password } = req.body;
     try {
         const result = await connection.exec(
-            `SELECT * FROM USERS WHERE EMAIL = ? AND PASSWORD = ?`,
+            `SELECT * FROM USERS WHERE Email = ? AND PasswordHash = ?`,
             [email, password]
         );
 
@@ -17,11 +17,16 @@ async function login(req, res) {
         }
 
         const user = result[0];
+
+        // Generate JWT token
         const token = jwt.sign(
-            { id: user.ID, email: user.EMAIL },
+            { id: user.UserID, email: user.Email },
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
+
+        // Update last login timestamp
+        await connection.exec(`UPDATE USERS SET LastLogin = CURRENT_TIMESTAMP WHERE UserID = ?`, [user.UserID]);
 
         res.json({ message: 'Login successful', token });
     } catch (error) {
@@ -31,25 +36,28 @@ async function login(req, res) {
 
 // Read last login
 async function lastLogin(req, res) {
-    const { id } = req.params;
-
     try {
         const result = await connection.exec(
-            `SELECT * FROM USERS WHERE LAST_LOGIN IS NOT NULL ORDER BY LAST_LOGIN DESC LIMIT 1`
+            `SELECT UserID, Name, Email, LastLogin FROM USERS WHERE LastLogin IS NOT NULL ORDER BY LastLogin DESC LIMIT 1`
         );
+
+        if (result.length === 0) {
+            return res.status(404).json({ message: 'No recent login found' });
+        }
+
         res.json(result[0]);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 }
 
-// Update a password router.put('/:id', );
+// Update a password
 async function updatePassword(req, res) {
     const { id } = req.params;
     const { password } = req.body;
 
     try {
-        const sql = `UPDATE USERS SET PASSWORD = ? WHERE ID = ?`;
+        const sql = `UPDATE USERS SET PasswordHash = ? WHERE UserID = ?`;
         await connection.exec(sql, [password, id]);
         res.json({ message: 'Password updated successfully!' });
     } catch (error) {
@@ -57,18 +65,16 @@ async function updatePassword(req, res) {
     }
 }
 
-
-// Delete a password router.delete('/:id', );
+// Delete a user (remove password)
 async function deletePassword(req, res) {
     const { id } = req.params;
 
     try {
-        await connection.exec(`DELETE FROM USERS WHERE ID = ?`, [id]);
-        res.json({ message: 'Password deleted successfully!' });
+        await connection.exec(`DELETE FROM USERS WHERE UserID = ?`, [id]);
+        res.json({ message: 'User deleted successfully!' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 }
 
-
-module.exports = { login , lastLogin ,  updatePassword , deletePassword };
+module.exports = { login, lastLogin, updatePassword, deletePassword };
