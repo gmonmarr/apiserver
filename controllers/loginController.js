@@ -36,13 +36,16 @@ async function login(req, res) {
 
 // Read last login
 async function lastLogin(req, res) {
+    const { id } = req.params;
+
     try {
         const result = await connection.exec(
-            `SELECT UserID, Name, Email, LastLogin FROM USERS WHERE LastLogin IS NOT NULL ORDER BY LastLogin DESC LIMIT 1`
+            `SELECT UserID, Name, Email, LastLogin FROM USERS WHERE UserID = ? AND LastLogin IS NOT NULL ORDER BY LastLogin DESC LIMIT 1`,
+            [id]
         );
 
         if (result.length === 0) {
-            return res.status(404).json({ message: 'No recent login found' });
+            return res.status(404).json({ message: 'No recent login found for this user' });
         }
 
         res.json(result[0]);
