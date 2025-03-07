@@ -18,18 +18,29 @@ app.use(express.json());
 app.use(cors());
 app.use(morgan('dev'));
 
-// Swagger Setup
+// Swagger
 const swaggerOptions = {
     definition: {
         openapi: "3.0.0",
         info: {
             title: "SAP HANA CRUD API",
             version: "1.0.0",
-            description: "API for user management and authentication"
+            description: "API for user management and authentication",
+            contact: {
+                name: "API Support",
+                url: "https://github.com/gmonmarr/apiserver"
+            }
         },
+        servers: [
+            {
+                url: "http://localhost:3000",
+                description: "Local server"
+            }
+        ]
     },
-    apis: ["./routes/*.js"]
+    apis: ["./routes/*.js"], // Automatically loads route documentation
 };
+
 
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
