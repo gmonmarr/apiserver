@@ -19,6 +19,10 @@ Alternativamente:
 ```bash
 nodemon server.js
 ```
+Adicionalmente:
+```bash
+http://localhost:3000/api-docs
+```
 
 # Ejemplos de uso
 ## Ruta users (localhost:3000/users)
